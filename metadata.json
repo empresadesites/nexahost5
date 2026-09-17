@@ -1,0 +1,6 @@
+{
+  "name": "NEXA HOST",
+  "description": "Plataforma profissional de hospedagem e revenda de VPS de alta performance com processadores Xeon, SSD NVMe, checkout PIX e suporte inteligente.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
