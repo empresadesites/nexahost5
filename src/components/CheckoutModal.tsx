@@ -41,10 +41,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [email, setEmail] = useState('');
   const [discord, setDiscord] = useState('');
 
-  // VPS Config form
-  const [vpsIp, setVpsIp] = useState('');
+  // VPS Preferences form (IP & Password are generated/assigned by administrators after payment approval)
   const [vpsName, setVpsName] = useState('');
-  const [vpsPassword, setVpsPassword] = useState('');
+  const [osChoice, setOsChoice] = useState('Ubuntu 22.04 LTS');
   const [observations, setObservations] = useState('');
 
   // State flags
@@ -81,14 +80,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   const handleFinalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!vpsName.trim()) {
-      setFormError('Por favor, informe ao menos um nome de identificação para sua VPS.');
-      return;
-    }
+    const finalVpsName = vpsName.trim() || `vps-${name.trim().split(' ')[0].toLowerCase()}`;
 
-    // Security Mandate:
-    // VPS password is NOT saved in localStorage or public state.
-    // We only set vpsPasswordProvided: true to notify the operator in safe memory.
+    // Note: IP and password are deliberately NOT chosen by the customer.
+    // They are set by the administrators in the admin panel upon approving the payment.
     const newOrder = storageService.createOrder({
       planId: plan.id,
       planName: plan.name,
@@ -100,9 +95,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       customerPhone: phone.trim(),
       customerEmail: email.trim(),
       customerDiscord: discord.trim() || undefined,
-      vpsIp: vpsIp.trim() || 'A definir pela Nexa',
-      vpsName: vpsName.trim(),
-      vpsPasswordProvided: Boolean(vpsPassword.trim()),
+      vpsIp: undefined, // Assigned by administrator upon payment approval
+      vpsName: finalVpsName,
+      osChoice: osChoice,
       observations: observations.trim() || undefined,
       paymentMethod: 'PIX',
       pixKey: settings.pixKey,
@@ -373,10 +368,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           <form onSubmit={handleFinalSubmit} className="p-6 space-y-4">
             <div className="space-y-1">
               <h3 className="text-base font-bold text-white">
-                DADOS PARA CONFIGURAÇÃO DA VPS
+                PREFERÊNCIAS DO SERVIDOR VPS
               </h3>
               <p className="text-xs text-slate-400">
-                Esses dados serão utilizados para configurar seu serviço. Nossos operadores irão provisionar a máquina com base nestas diretrizes.
+                Personalize o sistema operacional e identificação da sua máquina. O provisionamento e liberação de acesso serão realizados após a aprovação manual do PIX.
               </p>
             </div>
 
@@ -387,66 +382,63 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
             )}
 
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                IP DA VPS (Caso já possua bloco reservado, ou deixe em branco para alocação automática)
-              </label>
-              <input
-                type="text"
-                value={vpsIp}
-                onChange={(e) => setVpsIp(e.target.value)}
-                placeholder="Ex: 189.124.50.xxx (Opcional - Alocamos automaticamente)"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 text-sm font-mono"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                NOME DA VPS *
-              </label>
-              <input
-                type="text"
-                required
-                value={vpsName}
-                onChange={(e) => setVpsName(e.target.value)}
-                placeholder="Ex: meu-servidor-vps ou bot-discord-prod"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 text-sm font-mono"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                SENHA DESEJADA PARA A VPS (Acesso Root / Admin)
-              </label>
-              <div className="relative">
-                <input
-                  type="password"
-                  value={vpsPassword}
-                  onChange={(e) => setVpsPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 text-sm font-mono"
-                />
-                <Lock className="w-4 h-4 text-slate-500 absolute right-3 top-3" />
-              </div>
-
-              {/* Critical Security Notice Mandated by Prompt */}
-              <div className="mt-2 p-3 rounded-lg bg-blue-950/40 border border-blue-500/30 text-[11px] text-cyan-200 flex items-start gap-2">
-                <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-                <p>
-                  <strong>Aviso de Segurança:</strong> Em conformidade estrita com as diretrizes de hospedagem estática, a senha da VPS <strong>NÃO é armazenada em localStorage nem em código público</strong>. O campo está preparado para transmissão encriptada em trânsito com nossa equipe de ativação.
+            {/* Informational banner explaining that admin provisions IP and credentials */}
+            <div className="p-3.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-xs text-cyan-200 flex items-start gap-2.5">
+              <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <strong className="text-cyan-300 block font-mono text-[11px] uppercase tracking-wider">
+                  Alocação de IP e Credenciais pela Administração
+                </strong>
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  O <strong>endereço IP dedicado</strong>, usuário de acesso (root/admin) e a <strong>senha segura</strong> são configurados e liberados pela administração no painel assim que o pagamento for aprovado. Você receberá todos os dados prontos no seu WhatsApp e na tela de rastreamento.
                 </p>
               </div>
             </div>
 
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">
-                Observações ou Sistema Operacional Desejado (Opcional)
+                Sistema Operacional Desejado *
+              </label>
+              <select
+                value={osChoice}
+                onChange={(e) => setOsChoice(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-cyan-400 text-sm font-mono cursor-pointer"
+              >
+                <option value="Ubuntu 24.04 LTS (Noble Numbat)">Ubuntu 24.04 LTS (Mais Recente)</option>
+                <option value="Ubuntu 22.04 LTS (Jammy Jellyfish)">Ubuntu 22.04 LTS (Recomendado para FiveM / Bots / Web)</option>
+                <option value="Debian 12 (Bookworm)">Debian 12 Bookworm (Alta Estabilidade)</option>
+                <option value="Debian 11 (Bullseye)">Debian 11 Bullseye</option>
+                <option value="Windows Server 2022 Standard">Windows Server 2022 Standard (RDP / Área de Trabalho)</option>
+                <option value="Windows Server 2019 Datacenter">Windows Server 2019 Datacenter</option>
+                <option value="AlmaLinux 9 (RHEL Compatible)">AlmaLinux 9 (Compatível cPanel/Plesk)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">
+                Nome de Identificação da VPS (Hostname Opcional)
+              </label>
+              <input
+                type="text"
+                value={vpsName}
+                onChange={(e) => setVpsName(e.target.value)}
+                placeholder="Ex: servidor-fivem, bot-discord ou app-prod"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 text-sm font-mono"
+              />
+              <span className="text-[11px] text-slate-500 mt-1 block">
+                Deixe em branco para usar o nome padrão baseado no seu primeiro nome.
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">
+                Observações Adicionais para a Equipe de Ativação (Opcional)
               </label>
               <textarea
                 rows={2}
                 value={observations}
                 onChange={(e) => setObservations(e.target.value)}
-                placeholder="Ex: Ubuntu 22.04 LTS, Debian 12 ou Windows Server. Portas extras a liberar..."
+                placeholder="Ex: Portas específicas a liberar, versão de nodejs ou python, etc..."
                 className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 text-xs"
               ></textarea>
             </div>
@@ -464,7 +456,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 className="px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 hover:from-cyan-300 hover:to-blue-400 transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/20"
               >
                 <Server className="w-4 h-4" />
-                <span>ENVIAR PEDIDO</span>
+                <span>FINALIZAR PEDIDO</span>
               </button>
             </div>
           </form>

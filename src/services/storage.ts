@@ -450,6 +450,50 @@ export const storageService = {
     return orders[index];
   },
 
+  approveOrderAndActivateVps(
+    orderId: string,
+    activation: {
+      vpsIp: string;
+      vpsName: string;
+      vpsUser: string;
+      vpsPassword: string;
+      vpsPort?: string;
+      adminNotes?: string;
+      approvedBy?: string;
+    }
+  ): Order | null {
+    const orders = this.getOrders();
+    const index = orders.findIndex((o) => o.id === orderId);
+    if (index === -1) return null;
+
+    orders[index] = {
+      ...orders[index],
+      status: 'ativo',
+      vpsIp: activation.vpsIp.trim(),
+      vpsName: activation.vpsName.trim(),
+      vpsUser: activation.vpsUser.trim() || 'root',
+      vpsPassword: activation.vpsPassword.trim(),
+      vpsPort: activation.vpsPort?.trim() || '22',
+      approvedBy: activation.approvedBy || 'Administrador',
+      approvedAt: new Date().toISOString(),
+      adminNotes: activation.adminNotes?.trim() || orders[index].adminNotes,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.saveOrders(orders);
+    this.addLog(
+      activation.approvedBy || 'Administrador',
+      `Pagamento aprovado e VPS liberada com IP ${activation.vpsIp} para o pedido ${orderId}`
+    );
+    this.addNotification({
+      title: 'VPS Ativada com Sucesso',
+      message: `O pedido ${orderId} (${orders[index].customerName}) foi aprovado. IP: ${activation.vpsIp}.`,
+      type: 'order',
+      linkId: orderId,
+    });
+    return orders[index];
+  },
+
   getTickets(): Ticket[] {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.TICKETS);
