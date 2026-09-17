@@ -39,11 +39,15 @@ export interface Order {
   customerPhone: string; // WhatsApp
   customerEmail: string;
   customerDiscord?: string;
-  vpsIp?: string;
-  vpsName?: string;
-  // Security note: vpsPassword is never stored in storage or public code.
-  // We store a masked presence indicator like `[Configurada pelo cliente - Protegido]`
-  vpsPasswordProvided: boolean;
+  vpsIp?: string; // Atribuído pelo administrador após aprovar pagamento
+  vpsName?: string; // Nome/Hostname da máquina
+  vpsUser?: string; // Usuário de acesso (ex: root ou Administrator)
+  vpsPassword?: string; // Senha de acesso da VPS inserida pelo administrador
+  vpsPort?: string; // Porta de conexão (ex: 22 ou 3389)
+  vpsPasswordProvided?: boolean;
+  osChoice?: string; // Sistema Operacional desejado pelo cliente
+  approvedBy?: string; // Nome ou cargo do administrador que aprovou
+  approvedAt?: string; // Timestamp da aprovação
   observations?: string;
   paymentMethod: 'PIX';
   pixKey: string;

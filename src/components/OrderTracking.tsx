@@ -12,6 +12,12 @@ import {
   Calendar,
   ExternalLink,
   Zap,
+  Lock,
+  Eye,
+  EyeOff,
+  Copy,
+  Check,
+  Terminal,
 } from 'lucide-react';
 import { Order, OrderStatus } from '../types';
 import { storageService } from '../services/storage';
@@ -29,6 +35,14 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [showVpsPassword, setShowVpsPassword] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const copyToClipboard = (text: string, fieldName: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(fieldName);
+    setTimeout(() => setCopiedField(null), 2500);
+  };
 
   useEffect(() => {
     const orders = storageService.getOrders();
@@ -212,6 +226,164 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({
               </div>
             </div>
           </div>
+
+          {/* VPS Credentials Box (When order is active and approved by admin) */}
+          {currentOrder.status === 'ativo' && currentOrder.vpsIp && (
+            <div className="rounded-2xl bg-gradient-to-br from-emerald-950/40 via-slate-900 to-cyan-950/40 border-2 border-emerald-500/50 p-6 shadow-2xl shadow-emerald-950/40 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-500/30 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-400">
+                    <Terminal className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono text-emerald-400 uppercase font-bold tracking-wider block">
+                      SERVIÇO PROVISIONADO // DADOS DE ACESSO
+                    </span>
+                    <h4 className="text-base sm:text-lg font-bold text-white">
+                      Credenciais de Conexão à sua VPS
+                    </h4>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const fullDetails = `🚀 NEXA HOST - DADOS DE ACESSO VPS\nPedido: ${currentOrder.id}\nPlano: ${currentOrder.planName}\nIP da VPS: ${currentOrder.vpsIp}\nHostname: ${currentOrder.vpsName || 'vps-server'}\nUsuário: ${currentOrder.vpsUser || 'root'}\nSenha: ${currentOrder.vpsPassword || '[Definida pelo Administrador]'}\nPorta: ${currentOrder.vpsPort || '22'}\nComando SSH: ssh ${currentOrder.vpsUser || 'root'}@${currentOrder.vpsIp}`;
+                    copyToClipboard(fullDetails, 'all');
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-semibold flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto"
+                >
+                  {copiedField === 'all' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedField === 'all' ? 'TUDO COPIADO!' : 'COPIAR TODAS CREDENCIAIS'}</span>
+                </button>
+              </div>
+
+              {/* Credentials Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                {/* IP Field */}
+                <div className="p-3 rounded-xl bg-slate-950/80 border border-emerald-500/30">
+                  <span className="text-[11px] font-mono text-slate-400 block mb-1">IP da VPS:</span>
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="font-mono text-emerald-300 font-black text-sm select-all">
+                      {currentOrder.vpsIp}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(currentOrder.vpsIp || '', 'ip')}
+                      className="p-1 text-slate-400 hover:text-white transition-colors"
+                      title="Copiar IP"
+                    >
+                      {copiedField === 'ip' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Hostname Field */}
+                <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+                  <span className="text-[11px] font-mono text-slate-400 block mb-1">Hostname / Nome:</span>
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="font-mono text-white font-bold text-xs truncate">
+                      {currentOrder.vpsName || 'vps-server'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(currentOrder.vpsName || '', 'name')}
+                      className="p-1 text-slate-400 hover:text-white transition-colors"
+                      title="Copiar Nome"
+                    >
+                      {copiedField === 'name' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* User Field */}
+                <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+                  <span className="text-[11px] font-mono text-slate-400 block mb-1">Usuário:</span>
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="font-mono text-cyan-300 font-bold text-xs">
+                      {currentOrder.vpsUser || 'root'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(currentOrder.vpsUser || 'root', 'user')}
+                      className="p-1 text-slate-400 hover:text-white transition-colors"
+                      title="Copiar Usuário"
+                    >
+                      {copiedField === 'user' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Password Field */}
+                <div className="p-3 rounded-xl bg-slate-950/80 border border-emerald-500/30">
+                  <span className="text-[11px] font-mono text-slate-400 block mb-1">Senha Root / Admin:</span>
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="font-mono text-amber-300 font-bold text-xs">
+                      {currentOrder.vpsPassword
+                        ? showVpsPassword
+                          ? currentOrder.vpsPassword
+                          : '••••••••••••'
+                        : '[Definida pelo Administrador]'}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      {currentOrder.vpsPassword && (
+                        <button
+                          type="button"
+                          onClick={() => setShowVpsPassword(!showVpsPassword)}
+                          className="p-1 text-slate-400 hover:text-white transition-colors"
+                          title={showVpsPassword ? 'Ocultar Senha' : 'Ver Senha'}
+                        >
+                          {showVpsPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      )}
+                      {currentOrder.vpsPassword && (
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(currentOrder.vpsPassword || '', 'pass')}
+                          className="p-1 text-slate-400 hover:text-white transition-colors"
+                          title="Copiar Senha"
+                        >
+                          {copiedField === 'pass' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Connection Command Strip */}
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
+                <div className="flex items-center gap-2 text-slate-300 overflow-x-auto">
+                  <span className="text-cyan-400 shrink-0 font-bold">Comando de Conexão:</span>
+                  <code className="text-emerald-400 bg-slate-900 px-2.5 py-1 rounded border border-slate-800 text-[11px]">
+                    {(currentOrder.vpsPort === '3389' || currentOrder.osChoice?.toLowerCase().includes('windows'))
+                      ? `mstsc /v:${currentOrder.vpsIp}:${currentOrder.vpsPort || '3389'}`
+                      : `ssh ${currentOrder.vpsUser || 'root'}@${currentOrder.vpsIp} -p ${currentOrder.vpsPort || '22'}`}
+                  </code>
+                </div>
+                {currentOrder.approvedBy && (
+                  <span className="text-[11px] text-slate-500 shrink-0">
+                    Aprovado por: <strong className="text-slate-300">{currentOrder.approvedBy}</strong>
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Pending Approval Notice (When order is NOT yet active) */}
+          {currentOrder.status !== 'ativo' && currentOrder.status !== 'cancelado' && (
+            <div className="p-4 rounded-xl bg-amber-950/30 border border-amber-500/30 text-xs text-amber-200 flex items-start gap-3">
+              <Clock className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <strong className="text-amber-300 font-mono uppercase tracking-wider block text-[11px]">
+                  Pagamento em Análise pela Administração
+                </strong>
+                <p className="text-slate-300 text-xs leading-relaxed">
+                  Os administradores da Nexa Host estão conferindo a transferência PIX no painel de controle. Assim que o pagamento for aprovado, o <strong>IP dedicado da VPS, nome, usuário e senha</strong> serão liberados automaticamente aqui e também enviados diretamente no seu WhatsApp!
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Details Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-800">
